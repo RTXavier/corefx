@@ -1,0 +1,56 @@
+# Linux legs
+jobs:
+
+# Legs with Helix testing
+- template: corefx-base.yml
+  parameters:
+    name: LinHelix
+    displayName: Linux
+    strategy:
+      matrix:
+        # netcoreapp linux x64 release
+        x64_Release:
+          _configuration: Release
+          _architecture: x64
+          framework: netcoreapp
+          helixQueues: $(linuxDefaultQueues)
+          _dockerContainer: RhelContainer
+          _buildScriptPrefix: ''
+
+        # netcoreapp linux arm64 release
+        arm64_Release:
+          _configuration: Release
+          _architecture: arm64
+          framework: netcoreapp
+          helixQueues: $(linuxArmQueues)
+          _dockerContainer: UbuntuArmContainer
+          _buildScriptPrefix: 'ROOTFS_DIR=/crossrootfs/arm64 '
+
+    pool:
+      name: Hosted Ubuntu 1604
+
+    targetOS: Linux
+    container: $[ variables['_dockerContainer'] ]
+    buildScriptPrefix: $(_buildScriptPrefix)
+
+# Legs without helix
+- template: corefx-base.yml
+  parameters:
+    name: LinNoHelix
+    displayName: Linux
+    strategy:
+      matrix:
+        # linux-musl x64 debug
+        musl_x64_Debug:
+          _configuration: Debug
+          _architecture: x64
+          framework: netcoreapp
+          _dockerContainer: AlpineContainer
+          _buildExtraArguments: /p:RuntimeOs=linux-musl /p:PortableBuild=false
+    pool:
+      name: Default # TODO: update to Hosted Ubuntu 1604 once bring your own node is available
+
+    targetOS: Linux
+    container: $[ variables['_dockerContainer'] ]
+    buildExtraArguments: $(_buildExtraArguments)
+    submitToHelix: false
